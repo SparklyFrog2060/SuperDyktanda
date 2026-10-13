@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pause, Play, ShieldAlert, Volume2, X } from 'lucide-react';
 
 const LIBRARY_URL = 'https://sparklyfrog2060.github.io/PopUpLibrary';
-const MAX_POPUPS = 6;
+const AD_COUNT = 33;
+const AD_ROTATION_MS = 1_400;
 const EXPERIENCE_DURATION_MS = 12_000;
 
 interface SafePopupExperienceProps {
@@ -16,47 +17,71 @@ interface PopupCard {
 }
 
 export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClose }) => {
-  const [visibleCards, setVisibleCards] = useState<PopupCard[]>([]);
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundNeedsInteraction, setSoundNeedsInteraction] = useState(false);
   const alarmRef = useRef<HTMLAudioElement>(null);
 
   const popupCards = useMemo<PopupCard[]>(
     () =>
-      Array.from({ length: MAX_POPUPS }, (_, index) => ({
+      Array.from({ length: AD_COUNT }, (_, index) => ({
         id: index + 1,
         src: `${LIBRARY_URL}/${index + 1}.png`,
-        alt: `Bezpieczna karta demonstracyjna ${index + 1}`,
+        alt: `Reklama demonstracyjna ${index + 1}`,
       })),
     [],
   );
 
   useEffect(() => {
-    const timers = popupCards.map((card, index) =>
-      window.setTimeout(() => {
-        setVisibleCards((current) => [...current, card]);
-      }, index * 450),
-    );
+    const rotationTimer = window.setInterval(() => {
+      setActiveAdIndex((current) => (current + 1) % popupCards.length);
+    }, AD_ROTATION_MS);
     const endTimer = window.setTimeout(onClose, EXPERIENCE_DURATION_MS);
 
     return () => {
-      timers.forEach(window.clearTimeout);
+      window.clearInterval(rotationTimer);
       window.clearTimeout(endTimer);
     };
   }, [onClose, popupCards]);
 
   useEffect(() => {
-    if (!soundEnabled || isPaused || !alarmRef.current) return;
+    if (!alarmRef.current) return;
+
+    if (isPaused) {
+      alarmRef.current.pause();
+      return;
+    }
 
     alarmRef.current.currentTime = 0;
-    alarmRef.current.play().catch(() => {
-      setSoundEnabled(false);
-    });
-  }, [isPaused, soundEnabled]);
+    alarmRef.current.play()
+      .then(() => {
+        setSoundEnabled(true);
+      })
+      .catch(() => {
+        setSoundNeedsInteraction(true);
+      });
+  }, [isPaused]);
 
-  const toggleSound = () => {
-    setSoundEnabled((enabled) => !enabled);
+  const toggleSound = async () => {
+    if (!alarmRef.current) return;
+
+    if (soundEnabled) {
+      alarmRef.current.pause();
+      setSoundEnabled(false);
+      return;
+    }
+
+    try {
+      await alarmRef.current.play();
+      setSoundEnabled(true);
+      setSoundNeedsInteraction(false);
+    } catch {
+      setSoundNeedsInteraction(true);
+    }
   };
+
+  const activeAd = popupCards[activeAdIndex];
 
   return (
     <section
@@ -65,7 +90,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
       }`}
       aria-label="Bezpieczny pokaz multimedialny"
     >
-      <div className="relative mx-auto flex h-full max-w-5xl flex-col rounded-xl border border-white/20 bg-zinc-900/95 p-4 text-white shadow-2xl sm:p-6">
+      <div className="relative flex h-full flex-col bg-zinc-950/95 p-4 text-white shadow-2xl sm:p-8">
         <div className="relative z-20 flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold">
@@ -73,7 +98,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
               Bezpieczny pokaz
             </div>
             <p className="mt-1 max-w-xl text-xs text-zinc-300">
-              Ograniczona liczba kart, łagodne animacje i automatyczne zakończenie po 12 sekundach.
+              Reklamy zmieniają się pojedynczo, bez stroboskopu. Pokaz kończy się automatycznie po 12 sekundach.
             </p>
           </div>
 
@@ -88,18 +113,15 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
           </button>
         </div>
 
-        <div className="relative mt-4 min-h-0 flex-1 overflow-hidden rounded-lg border border-white/10 bg-zinc-950">
+        <div className="relative mt-4 min-h-0 flex-1 overflow-hidden bg-zinc-950">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.12),transparent_55%)]" />
 
-          {visibleCards.map((card, index) => (
-            <img
-              key={card.id}
-              src={card.src}
-              alt={card.alt}
-              className={`safe-popup-card safe-popup-card-${index % 3}`}
-              style={{ animationDelay: `${index * 80}ms` }}
-            />
-          ))}
+          <img
+            key={activeAd.id}
+            src={activeAd.src}
+            alt={activeAd.alt}
+            className="safe-popup-card"
+          />
 
           <img
             src={`${LIBRARY_URL}/avast.jpg`}
@@ -111,7 +133,8 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
             <div className="flex items-start gap-2 text-xs text-zinc-300">
               <Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
               <span>
-                Dźwięk jest wyłączony domyślnie. Wideo działa bez dźwięku; alarm można włączyć ręcznie.
+                Dźwięk uruchamia się automatycznie, jeśli pozwala na to przeglądarka. W przeciwnym razie użyj przycisku.
+                {soundNeedsInteraction && ' Autoplay został zablokowany.'}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -125,7 +148,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
               </button>
               <button
                 type="button"
-                onClick={toggleSound}
+                onClick={() => void toggleSound()}
                 className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-colors hover:bg-amber-200"
               >
                 <Volume2 className="h-3.5 w-3.5" />
