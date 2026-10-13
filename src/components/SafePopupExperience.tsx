@@ -90,41 +90,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
       }`}
       aria-label="Bezpieczny pokaz reklam"
     >
-      <div className="safe-experience-controls pointer-events-auto">
-        <div className="flex items-center gap-2 text-xs text-zinc-700">
-          <ShieldAlert className="h-4 w-4 text-amber-600" />
-          <span>
-            10 spokojnych reklam. Zmienią się dopiero po zamknięciu.
-            {soundNeedsInteraction && ' Kliknij „Włącz dźwięk”, aby uruchomić avast.mp3.'}
-          </span>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setIsPaused((paused) => !paused)}
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white/95 px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm"
-          >
-            {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-            {isPaused ? 'Wznów' : 'Pauza'}
-          </button>
-          <button
-            type="button"
-            onClick={() => void toggleSound()}
-            className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 px-2.5 py-1.5 text-xs font-semibold text-zinc-950 shadow-sm"
-          >
-            <Volume2 className="h-3.5 w-3.5" />
-            {soundEnabled ? 'Wyłącz dźwięk' : 'Włącz dźwięk'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm"
-          >
-            <X className="h-3.5 w-3.5" />
-            Zamknij wszystko
-          </button>
-        </div>
-      </div>
+
 
       {activeAdIds.map((adId, slotIndex) => {
         const card = popupCards[adId];
