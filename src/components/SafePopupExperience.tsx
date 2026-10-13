@@ -153,7 +153,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
       />
 
       <video
-        className="pointer-events-none absolute h-px w-px opacity-0"
+        className="safe-background-video pointer-events-none"
         src={`${LIBRARY_URL}/video1.mp4`}
         autoPlay
         muted
