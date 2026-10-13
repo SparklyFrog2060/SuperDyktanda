@@ -174,7 +174,12 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
         playsInline
         aria-hidden="true"
       />
-      <audio ref={audioRef} src={`${LIBRARY_URL}/avast.mp3`} preload="auto" />
+      <audio
+        ref={audioRef}
+        src={`${LIBRARY_URL}/avast.mp3`}
+        preload="auto"
+        loop
+      />
     </section>
   );
 };
