@@ -1,0 +1,90 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email_verified == true && request.auth.token.email == 'sparklyfrog2060@gmail.com') ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidCategory(data) {
+      return data.keys().hasAll(['name', 'order']) &&
+        data.keys().hasOnly(['name', 'order', 'description', 'icon', 'createdAt']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.order is number &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 300)) &&
+        (!('icon' in data) || (data.icon is string && data.icon.size() <= 50)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    function isValidDictation(data) {
+      return data.keys().hasAll(['title', 'categoryId', 'rawText', 'totalGaps']) &&
+        data.keys().hasOnly(['title', 'categoryId', 'description', 'difficulty', 'rawText', 'segments', 'totalGaps', 'createdAt', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 150 &&
+        data.categoryId is string && data.categoryId.size() <= 128 &&
+        data.rawText is string && data.rawText.size() <= 10000 &&
+        data.totalGaps is number && data.totalGaps >= 0 && data.totalGaps <= 200 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+        (!('difficulty' in data) || (data.difficulty in ['easy', 'medium', 'hard'])) &&
+        (!('segments' in data) || (data.segments is list && data.segments.size() <= 500)) &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64)) &&
+        (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    function isValidAdmin(data) {
+      return data.keys().hasAll(['email', 'role']) &&
+        data.keys().hasOnly(['email', 'role', 'createdAt']) &&
+        data.email is string && data.email.size() <= 200 &&
+        data.role == 'admin' &&
+        (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 64));
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Categories: Publicly readable for learners, writable only by admins
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create: if isValidId(categoryId) && isAdmin() && isValidCategory(incoming());
+      allow update: if isValidId(categoryId) && isAdmin() && isValidCategory(incoming());
+      allow delete: if isValidId(categoryId) && isAdmin();
+    }
+
+    // Dictations: Publicly readable for learners, writable only by admins
+    match /dictations/{dictationId} {
+      allow get, list: if true;
+      allow create: if isValidId(dictationId) && isAdmin() && isValidDictation(incoming());
+      allow update: if isValidId(dictationId) && isAdmin() && isValidDictation(incoming());
+      allow delete: if isValidId(dictationId) && isAdmin();
+    }
+
+    // Admins: Read-only for signed-in, managed by admins
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isValidId(adminId) && isAdmin() && isValidAdmin(incoming());
+    }
+  }
+}

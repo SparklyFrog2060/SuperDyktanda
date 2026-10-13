@@ -1,0 +1,6 @@
+{
+  "name": "Dyktanda Online - Platforma do ćwiczenia pisowni",
+  "description": "Interaktywna platforma do ćwiczenia dyktand i ortografii z panelem tworzenia zadań.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

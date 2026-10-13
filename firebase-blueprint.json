@@ -1,0 +1,132 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "Kategoria tematyczna lub poziom trudności dla dyktand",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Nazwa kategorii",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "description": "Opis kategorii",
+          "maxLength": 300
+        },
+        "icon": {
+          "type": "string",
+          "description": "Ikona kategorii",
+          "maxLength": 50
+        },
+        "order": {
+          "type": "number",
+          "description": "Kolejność wyświetlania"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data utworzenia"
+        }
+      },
+      "required": ["name", "order"]
+    },
+    "Dictation": {
+      "title": "Dictation",
+      "description": "Ćwiczenie dyktanda z lukami",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Tytuł dyktanda",
+          "minLength": 1,
+          "maxLength": 150
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "ID kategorii",
+          "maxLength": 128
+        },
+        "description": {
+          "type": "string",
+          "description": "Krótki opis lub instrukcja",
+          "maxLength": 500
+        },
+        "difficulty": {
+          "type": "string",
+          "description": "Poziom trudności",
+          "enum": ["easy", "medium", "hard"]
+        },
+        "rawText": {
+          "type": "string",
+          "description": "Oryginalny pełny tekst dyktanda",
+          "maxLength": 10000
+        },
+        "segments": {
+          "type": "array",
+          "description": "Segmenty tekstu oraz luki"
+        },
+        "totalGaps": {
+          "type": "number",
+          "description": "Łączna liczba luk do uzupełnienia"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data utworzenia"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data modyfikacji"
+        }
+      },
+      "required": ["title", "categoryId", "rawText", "totalGaps"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Profil uprawnionego administratora",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Adres e-mail administratora",
+          "maxLength": 200
+        },
+        "role": {
+          "type": "string",
+          "description": "Rola w systemie",
+          "enum": ["admin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data nadania uprawnień"
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": {
+        "$ref": "#/entities/Category"
+      },
+      "description": "Kolekcja kategorii dyktand dostępna do odczytu dla wszystkich"
+    },
+    "/dictations/{dictationId}": {
+      "schema": {
+        "$ref": "#/entities/Dictation"
+      },
+      "description": "Kolekcja dyktand dostępna do odczytu dla wszystkich użytkowników"
+    },
+    "/admins/{adminId}": {
+      "schema": {
+        "$ref": "#/entities/Admin"
+      },
+      "description": "Kolekcja ról administratorów chroniona autoryzacją"
+    }
+  }
+}
