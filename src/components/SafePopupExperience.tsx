@@ -3,8 +3,7 @@ import { Pause, Play, ShieldAlert, Volume2, X } from 'lucide-react';
 
 const LIBRARY_URL = 'https://sparklyfrog2060.github.io/PopUpLibrary';
 const AD_COUNT = 33;
-const AD_ROTATION_MS = 1_400;
-const EXPERIENCE_DURATION_MS = 12_000;
+const VISIBLE_ADS = 10;
 
 interface SafePopupExperienceProps {
   onClose: () => void;
@@ -17,11 +16,14 @@ interface PopupCard {
 }
 
 export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClose }) => {
-  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const [activeAdIds, setActiveAdIds] = useState<number[]>(
+    () => Array.from({ length: VISIBLE_ADS }, (_, index) => index),
+  );
+  const [nextAdId, setNextAdId] = useState(VISIBLE_ADS);
   const [isPaused, setIsPaused] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundNeedsInteraction, setSoundNeedsInteraction] = useState(false);
-  const alarmRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const popupCards = useMemo<PopupCard[]>(
     () =>
@@ -34,46 +36,32 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
   );
 
   useEffect(() => {
-    const rotationTimer = window.setInterval(() => {
-      setActiveAdIndex((current) => (current + 1) % popupCards.length);
-    }, AD_ROTATION_MS);
-    const endTimer = window.setTimeout(onClose, EXPERIENCE_DURATION_MS);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    return () => {
-      window.clearInterval(rotationTimer);
-      window.clearTimeout(endTimer);
-    };
-  }, [onClose, popupCards]);
+    audio.currentTime = 0;
+    audio.play()
+      .then(() => setSoundEnabled(true))
+      .catch(() => setSoundNeedsInteraction(true));
+  }, []);
 
   useEffect(() => {
-    if (!alarmRef.current) return;
-
-    if (isPaused) {
-      alarmRef.current.pause();
-      return;
-    }
-
-    alarmRef.current.currentTime = 0;
-    alarmRef.current.play()
-      .then(() => {
-        setSoundEnabled(true);
-      })
-      .catch(() => {
-        setSoundNeedsInteraction(true);
-      });
+    if (!isPaused) return;
+    audioRef.current?.pause();
   }, [isPaused]);
 
   const toggleSound = async () => {
-    if (!alarmRef.current) return;
+    const audio = audioRef.current;
+    if (!audio) return;
 
     if (soundEnabled) {
-      alarmRef.current.pause();
+      audio.pause();
       setSoundEnabled(false);
       return;
     }
 
     try {
-      await alarmRef.current.play();
+      await audio.play();
       setSoundEnabled(true);
       setSoundNeedsInteraction(false);
     } catch {
@@ -81,101 +69,99 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
     }
   };
 
-  const activeAd = popupCards[activeAdIndex];
+  const closeAd = (slotIndex: number) => {
+    setActiveAdIds((current) => {
+      if (nextAdId >= AD_COUNT) {
+        return current.filter((_, index) => index !== slotIndex);
+      }
+
+      return current.map((adId, index) => (index === slotIndex ? nextAdId : adId));
+    });
+    setNextAdId((current) => Math.min(current + 1, AD_COUNT));
+  };
 
   return (
     <section
-      className={`safe-experience fixed inset-0 z-50 overflow-hidden bg-zinc-950/80 p-4 sm:p-8 ${
+      className={`safe-experience fixed inset-0 z-50 pointer-events-none ${
         isPaused ? 'safe-experience-paused' : ''
       }`}
-      aria-label="Bezpieczny pokaz multimedialny"
+      aria-label="Bezpieczny pokaz reklam"
     >
-      <div className="relative flex h-full flex-col bg-zinc-950/95 p-4 text-white shadow-2xl sm:p-8">
-        <div className="relative z-20 flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <ShieldAlert className="h-4 w-4 text-amber-300" />
-              Bezpieczny pokaz
-            </div>
-            <p className="mt-1 max-w-xl text-xs text-zinc-300">
-              Reklamy zmieniają się pojedynczo, bez stroboskopu. Pokaz kończy się automatycznie po 12 sekundach.
-            </p>
-          </div>
-
+      <div className="safe-experience-controls pointer-events-auto">
+        <div className="flex items-center gap-2 text-xs text-zinc-700">
+          <ShieldAlert className="h-4 w-4 text-amber-600" />
+          <span>
+            10 spokojnych reklam. Zmienią się dopiero po zamknięciu.
+            {soundNeedsInteraction && ' Kliknij „Włącz dźwięk”, aby uruchomić avast.mp3.'}
+          </span>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setIsPaused((paused) => !paused)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-300 bg-white/95 px-2.5 py-1.5 text-xs font-medium text-zinc-800 shadow-sm"
+          >
+            {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+            {isPaused ? 'Wznów' : 'Pauza'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void toggleSound()}
+            className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 px-2.5 py-1.5 text-xs font-semibold text-zinc-950 shadow-sm"
+          >
+            <Volume2 className="h-3.5 w-3.5" />
+            {soundEnabled ? 'Wyłącz dźwięk' : 'Włącz dźwięk'}
+          </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-            aria-label="Zamknij pokaz"
-            title="Zamknij pokaz"
+            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-2.5 py-1.5 text-xs font-semibold text-white shadow-sm"
           >
-            <X className="h-5 w-5" />
+            <X className="h-3.5 w-3.5" />
+            Zamknij wszystko
           </button>
         </div>
-
-        <div className="relative mt-4 min-h-0 flex-1 overflow-hidden bg-zinc-950">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.12),transparent_55%)]" />
-
-          <img
-            key={activeAd.id}
-            src={activeAd.src}
-            alt={activeAd.alt}
-            className="safe-popup-card"
-          />
-
-          <img
-            src={`${LIBRARY_URL}/avast.jpg`}
-            alt="Bezpieczna karta ostrzegawcza"
-            className="safe-avast-card"
-          />
-
-          <div className="absolute inset-x-3 bottom-3 z-10 grid gap-3 rounded-lg border border-white/10 bg-zinc-900/90 p-3 backdrop-blur sm:grid-cols-[1fr_auto] sm:items-center">
-            <div className="flex items-start gap-2 text-xs text-zinc-300">
-              <Volume2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-              <span>
-                Dźwięk uruchamia się automatycznie, jeśli pozwala na to przeglądarka. W przeciwnym razie użyj przycisku.
-                {soundNeedsInteraction && ' Autoplay został zablokowany.'}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPaused((paused) => !paused)}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/10"
-              >
-                {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-                {isPaused ? 'Wznów' : 'Pauza'}
-              </button>
-              <button
-                type="button"
-                onClick={() => void toggleSound()}
-                className="inline-flex items-center gap-1.5 rounded-md bg-amber-300 px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-colors hover:bg-amber-200"
-              >
-                <Volume2 className="h-3.5 w-3.5" />
-                {soundEnabled ? 'Wyłącz dźwięk' : 'Włącz alarm'}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-zinc-950 transition-colors hover:bg-zinc-200"
-              >
-                Zakończ
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <video
-          className="pointer-events-none absolute h-px w-px opacity-0"
-          src={`${LIBRARY_URL}/video1.mp4`}
-          autoPlay
-          muted
-          loop
-          playsInline
-          aria-hidden="true"
-        />
-        <audio ref={alarmRef} src={`${LIBRARY_URL}/alarm.mp3`} preload="none" />
       </div>
+
+      {activeAdIds.map((adId, slotIndex) => {
+        const card = popupCards[adId];
+        if (!card) return null;
+
+        return (
+          <article
+            key={`${slotIndex}-${card.id}`}
+            className={`safe-ad-card safe-ad-card-${slotIndex} pointer-events-auto`}
+          >
+            <img src={card.src} alt={card.alt} />
+            <button
+              type="button"
+              onClick={() => closeAd(slotIndex)}
+              className="safe-ad-close"
+              aria-label={`Zamknij reklamę ${card.id}`}
+              title="Zamknij reklamę"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </article>
+        );
+      })}
+
+      <img
+        src={`${LIBRARY_URL}/avast.jpg`}
+        alt="Avast"
+        className="safe-avast-card pointer-events-none"
+      />
+
+      <video
+        className="pointer-events-none absolute h-px w-px opacity-0"
+        src={`${LIBRARY_URL}/video1.mp4`}
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
+      <audio ref={audioRef} src={`${LIBRARY_URL}/avast.mp3`} preload="auto" />
     </section>
   );
 };

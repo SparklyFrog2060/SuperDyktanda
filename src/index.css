@@ -1,49 +1,80 @@
 @import "tailwindcss";
 
-@keyframes safe-popup-enter {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 18px, 0) scale(0.96);
-  }
-  to {
-    opacity: 0.9;
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-.safe-popup-card {
+.safe-experience-controls {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(68vw, 620px);
-  max-height: 58%;
-  object-fit: contain;
-  opacity: 0;
-  transform: translate(-50%, -50%);
-  animation: safe-popup-enter 500ms ease-out forwards;
+  left: 1rem;
+  top: 1rem;
+  z-index: 40;
+  max-width: min(30rem, calc(100vw - 2rem));
+  padding: 0.75rem;
+  border: 1px solid rgb(212 212 216 / 0.85);
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  backdrop-filter: blur(8px);
 }
 
 .safe-avast-card {
   position: absolute;
-  right: 8%;
-  top: 8%;
-  z-index: 1;
-  width: clamp(180px, 28vw, 360px);
-  max-height: 36%;
+  left: 50%;
+  top: 50%;
+  z-index: 20;
+  width: clamp(170px, 20vw, 280px);
+  max-height: 25%;
   object-fit: contain;
-  opacity: 0.78;
+  opacity: 0.86;
+  transform: translate(-50%, -50%);
   border-radius: 0.5rem;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 0.3);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
 }
 
-.safe-experience-paused .safe-popup-card {
-  animation-play-state: paused;
+.safe-ad-card {
+  position: absolute;
+  z-index: 10;
+  width: clamp(110px, 15vw, 210px);
+  min-height: 5rem;
+  padding: 0.3rem;
+  border: 1px solid rgb(212 212 216 / 0.9);
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 0.93);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.16);
 }
+
+.safe-ad-card img {
+  display: block;
+  width: 100%;
+  max-height: 17vh;
+  object-fit: contain;
+}
+
+.safe-ad-close {
+  position: absolute;
+  right: 0.2rem;
+  top: 0.2rem;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.92);
+  color: rgb(63 63 70);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.2);
+}
+
+.safe-ad-card-0 { left: 4%; top: 18%; }
+.safe-ad-card-1 { left: 23%; top: 14%; }
+.safe-ad-card-2 { left: 43%; top: 16%; }
+.safe-ad-card-3 { right: 22%; top: 14%; }
+.safe-ad-card-4 { right: 4%; top: 20%; }
+.safe-ad-card-5 { left: 5%; bottom: 14%; }
+.safe-ad-card-6 { left: 25%; bottom: 9%; }
+.safe-ad-card-7 { left: 45%; bottom: 12%; }
+.safe-ad-card-8 { right: 22%; bottom: 10%; }
+.safe-ad-card-9 { right: 4%; bottom: 16%; }
 
 @media (prefers-reduced-motion: reduce) {
-  .safe-popup-card,
+  .safe-ad-card,
   .safe-avast-card {
-    animation: none;
-    opacity: 0.9;
+    transition: none;
   }
 }
