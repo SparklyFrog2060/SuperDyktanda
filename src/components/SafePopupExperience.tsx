@@ -24,6 +24,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundNeedsInteraction, setSoundNeedsInteraction] = useState(false);
   const [wideAds, setWideAds] = useState<Record<number, boolean>>({});
+  const [layoutOffset, setLayoutOffset] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const popupCards = useMemo<PopupCard[]>(
@@ -79,6 +80,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
       return current.map((adId, index) => (index === slotIndex ? nextAdId : adId));
     });
     setNextAdId((current) => Math.min(current + 1, AD_COUNT));
+    setLayoutOffset((current) => (current + 1) % VISIBLE_ADS);
   };
 
   return (
@@ -131,7 +133,7 @@ export const SafePopupExperience: React.FC<SafePopupExperienceProps> = ({ onClos
         return (
           <article
             key={`${slotIndex}-${card.id}`}
-            className={`safe-ad-card safe-ad-card-${slotIndex} ${
+            className={`safe-ad-card safe-ad-card-${(slotIndex + layoutOffset) % VISIBLE_ADS} ${
               wideAds[card.id] ? 'safe-ad-card-wide' : ''
             } pointer-events-auto`}
           >
