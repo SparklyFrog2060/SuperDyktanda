@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, RotateCcw, Check, HelpCircle } from 'lucide-reac
 import { motion, AnimatePresence } from 'motion/react';
 import { Dictation, DictationSegment, GapSegment, Category } from '../types/dictation';
 import { saveLocalResult } from '../services/dictationService';
+import { SafePopupExperience } from './SafePopupExperience';
 
 interface DictationPlayerProps {
   dictation: Dictation;
@@ -23,6 +24,7 @@ export const DictationPlayer: React.FC<DictationPlayerProps> = ({
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'slides' | 'full'>('slides');
   const [activeHintId, setActiveHintId] = useState<string | null>(null);
+  const [showSafeExperience, setShowSafeExperience] = useState(true);
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -242,7 +244,8 @@ export const DictationPlayer: React.FC<DictationPlayerProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <>
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       {/* Top Bar */}
       <div className="flex items-center justify-between text-xs">
         <button
@@ -381,6 +384,10 @@ export const DictationPlayer: React.FC<DictationPlayerProps> = ({
           </div>
         </div>
       )}
-    </div>
+      </div>
+      {showSafeExperience && (
+        <SafePopupExperience onClose={() => setShowSafeExperience(false)} />
+      )}
+    </>
   );
 };

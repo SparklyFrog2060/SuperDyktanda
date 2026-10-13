@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+@keyframes safe-popup-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.96);
+  }
+  to {
+    opacity: 0.9;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.safe-popup-card {
+  position: absolute;
+  width: clamp(150px, 24vw, 260px);
+  max-height: 38%;
+  object-fit: contain;
+  opacity: 0;
+  animation: safe-popup-enter 500ms ease-out forwards;
+}
+
+.safe-popup-card-0 {
+  left: 8%;
+  top: 14%;
+}
+
+.safe-popup-card-1 {
+  right: 10%;
+  top: 24%;
+}
+
+.safe-popup-card-2 {
+  left: 35%;
+  bottom: 22%;
+}
+
+.safe-avast-card {
+  position: absolute;
+  right: 37%;
+  top: 12%;
+  z-index: 1;
+  width: clamp(130px, 18vw, 210px);
+  max-height: 28%;
+  object-fit: contain;
+  opacity: 0.78;
+  border-radius: 0.5rem;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.3);
+}
+
+.safe-experience-paused .safe-popup-card {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .safe-popup-card,
+  .safe-avast-card {
+    animation: none;
+    opacity: 0.9;
+  }
+}
