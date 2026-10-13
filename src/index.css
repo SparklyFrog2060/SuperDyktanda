@@ -13,35 +13,23 @@
 
 .safe-popup-card {
   position: absolute;
-  width: clamp(150px, 24vw, 260px);
-  max-height: 38%;
+  left: 50%;
+  top: 50%;
+  width: min(68vw, 620px);
+  max-height: 58%;
   object-fit: contain;
   opacity: 0;
+  transform: translate(-50%, -50%);
   animation: safe-popup-enter 500ms ease-out forwards;
-}
-
-.safe-popup-card-0 {
-  left: 8%;
-  top: 14%;
-}
-
-.safe-popup-card-1 {
-  right: 10%;
-  top: 24%;
-}
-
-.safe-popup-card-2 {
-  left: 35%;
-  bottom: 22%;
 }
 
 .safe-avast-card {
   position: absolute;
-  right: 37%;
-  top: 12%;
+  right: 8%;
+  top: 8%;
   z-index: 1;
-  width: clamp(130px, 18vw, 210px);
-  max-height: 28%;
+  width: clamp(180px, 28vw, 360px);
+  max-height: 36%;
   object-fit: contain;
   opacity: 0.78;
   border-radius: 0.5rem;
